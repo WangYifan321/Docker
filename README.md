@@ -498,6 +498,64 @@ docker attach--------------> 进入当前正在运行的容器，不会启动新
 docker cp 容器id:容器内路径 主机路径
 ```
 
+# 安装练习
+
+## Docker安装Nginx
+
+```shell
+[root@wyf ~]# docker pull nginx
+Using default tag: latest
+latest: Pulling from library/nginx
+b4d181a07f80: Pull complete 
+66b1c490df3f: Pull complete 
+d0f91ae9b44c: Pull complete 
+baf987068537: Pull complete 
+6bbc76cbebeb: Pull complete 
+32b766478bc2: Pull complete 
+Digest: sha256:3ca76089b14cf7db77cc5d4f3e9c9eb73768b9c85a0eabde1046435a6aa41c06
+Status: Downloaded newer image for nginx:latest
+docker.io/library/nginx:latest
+[root@wyf ~]# docker images
+REPOSITORY   TAG       IMAGE ID       CREATED        SIZE
+nginx        latest    4cdc5dd7eaad   8 hours ago    133MB
+centos       latest    300e315adb2f   7 months ago   209MB
+[root@wyf ~]# docker run -d --name nginx01 -p 8081:80 nginx
+b49c1cde970a06c7a1e014738a777ef89b0adfcb0af14300cef732978554250d
+
+```
+
+## Docker安装tomcat
+
+没有镜像的化可以直接运行，会自动的从docker hub上拉取
+
+```shell
+# 官方使用，用完即删除
+docker run -it --rm tomcat:9.0
+
+# 下载再启动
+docker pull tomcat
+
+# 启动运行
+docker run -d -p 8080:8080 --name tomcat01 tomcat
+
+# 进入容器
+docker exec -it tomcat01 /bin/bash
+# Linux命令少了，没有了webapps，阿里云镜像默认使用了最小的镜像，# 所有不必要的都被删除掉了，保证最小的可运行的环境。
+
+```
+
+# 可视化
+
+portainer
+
+```shell
+# 安装
+docker run -d -p 1227:9000 --restart=always -v /var/run/docker.sock:/var/run/dock.sock --privileged=true portainer/portainer
+
+# 测试
+http://47.111.190.15:1227/
+```
+
 
 
 
