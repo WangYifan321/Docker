@@ -556,7 +556,50 @@ docker run -d -p 1227:9000 --restart=always -v /var/run/docker.sock:/var/run/doc
 http://47.111.190.15:1227/
 ```
 
+# Commit镜像
 
+```shell
+docker commit -a="wangyifan" -m="add webapps app" 容器id tomcat02:1.0(新生成的容器名:版本号)
+
+-a  # 作者
+-m  # 类似于git的-m，附加的信息
+```
+
+# 容器数据卷
+
+**将容器内的某一个文件和容器外的进行双向绑定**
+
+```shell
+docker run -it -v 主机目录:容器内目录
+
+docker run -it -v /home/ceshi:/home centos /bin/bash  # 根据镜像开启一个新的容器
+
+docker start 容器id  # 启动一个已有的容器
+docker attach 容器id # 不开启新终端进入容器
+```
+
+## 具名和匿名挂载
+
+```shell
+-v 容器内路径          # 匿名挂载
+-v 卷名:容器内路径      # 具名挂载
+-v /宿主机路径:容器内路径 # 指定路径挂载
+
+docker volume --help
+
+# 匿名挂载
+docker run -d -P --name nginx01 -v /etc/nginx nginx
+
+# 查看所有的volume的情况
+docker volume ls
+
+# 匿名挂载
+docker run -d -P --name nginx02 -v jvming-nginx02:/etc/nginx nginx
+```
+
+可以改权限：让容器内的文件只能在容器外读写，在容器内的路径后加:ro 或者：rw
+
+# DockerFile
 
 
 
