@@ -1,4 +1,23 @@
+# 常用命令-核心
+
+```shell
+docker run 容器id （可以在后面加cmd命令）
+docker run -it centos /bin/bash
+docker rm -f $(docker ps -aq)
+docker images
+docker pull
+docker ps (-a-所有包括历史，-q-只显示id)
+docker start 容器id
+docker restart 容器id
+docker stop 容器id      # 停止当前正在运行的容器
+docker kill 容器id      # 强制停止当前容器
+docker logs -f -t --tail n条 容器id
+docker inspect 容器id
+```
+
 # Docker学习
+
+
 
 https://docs.docker.com/engine/install/centos/
 
@@ -600,6 +619,136 @@ docker run -d -P --name nginx02 -v jvming-nginx02:/etc/nginx nginx
 可以改权限：让容器内的文件只能在容器外读写，在容器内的路径后加:ro 或者：rw
 
 # DockerFile
+
+## 基础语法
+
+```shell
+FROM       # 基础镜像，一切从这里开始构建
+MAINTAINER # 镜像是谁写的，姓名+邮箱
+RUN        # 镜像构建的时候需要运行的指令
+ADD        # 步骤，tomcat镜像，这个tomcat压缩包，添加内容
+WORKDIR    # 镜像的工作目录
+VOLUME     # 挂载的目录
+EXPOSE     # 指定对外的端口
+CMD        # 指定这个容器启动的时候要运行的命令，只有最后一个会生效
+ENTRYPOINT # 指定这个容器启动的时候要运行的命令，可以追加命令
+ONBUILD    # 当构建一个被继承 Dockerfile 这个时候就会运行 ONBUILD 命令，触发指令
+COPY       # 类似ADD ，将我们文件拷贝到镜像中
+ENV        # 构建的时候设置环境变量，比如设置最大可用内存，MySQL的密码等
+```
+
+## 实战应用
+
+创建一个自己的centos
+
+```shell
+# 1、创建dockerfile文件
+[root@wyf dockerfile]# vim mydockerfile-centos 
+
+FROM centos
+MAINTAINER wangyifan<877801903@qq.com>
+
+ENV MYPATH /usr/local
+WORKDIR $MYPATH
+
+RUN yum -y install vim
+RUN yum -y install net-tools
+
+EXPOSE 80
+
+CMD  echo $MYPATH
+CMD echo "-----end---"
+CMD /bin/bash
+
+
+# 2、通过这个文件构建镜像
+  docker build -f mydockerfile-centos -t mycentos:0.1 .
+  -f file选择文件
+  -t target目标
+  
+  
+# 3、测试运行
+  
+```
+
+**docker history可以查看镜像的构建过程**
+
+>CMD和ENTRYPOINT的区别
+
+cmd 命令会被覆盖，相当于只能有一个cmd命令
+
+```shell
+CMD["ls","-a"]
+
+docker run 容器id -l  # -l相当于追加了一条cmd命令
+```
+
+entrypoint不会被覆盖，可以追加命令
+
+## 实战tomcat
+
+1、准备镜像文件和压缩包
+
+2、编写dockerfile
+
+```shell
+FROM centos
+MAINTAINER wangyifan<wangyifan52199@163.com>
+
+COPY readme.txt /usr/local/readme.txt
+
+ADD jdk-11_linux-x64_bin.tar.gz /usr/local
+ADD apache-tomcat-9.0.50.tar.gz /usr/local
+
+RUN yum -y install vim
+
+ENV MYPATH /usr/local
+WORKDIR $MYPATH
+
+ENV JAVA_HOME /usr/local/jdk-11
+ENV CLASSPATH $JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar
+ENV CATALINA_HOME /usr/local/apache-tomcat-9.0.50
+ENV CATALINA_BASH /usr/local/apache-tomcat-9.0.50
+ENV PATH $PATH:$JAVA_HOME/bin:$CATALINA_HOME/lib:$CATALINA_HOME/bin
+
+EXPOSE 8080
+CMD /usr/local/apache-tomcat-9.0.50/bin/startup.sh && tail -F /usr/local/apache-tomcat-9.0.50/bin/logs/catalina.out
+
+```
+
+3、docker build -t name .
+
+​     -t 后面跟上要生成镜像的名字
+
+​      **不要把点漏掉**
+
+4、启动
+
+```shell
+docker run -d -p 1227:8080 --name wangyifantomcat -v /home/wangyifan/diytomcat/test:/usr/local/apache-tomcat-9.0.50/webapps/test -v /home/wangyifan/diytomcat/tomcatlogs/:/usr/local/apache-tomcat-9.0.50/logs diytomcat
+```
+
+5、进入容器查看
+
+```shell
+docker exec -it fa9d2d0a37cd /bin/bash
+```
+
+6、之前进行了卷挂载，现在可以直接发布项目
+
+# Docker 网络
+
+查看ip
+
+```shell
+ip addr
+```
+
+
+
+
+
+
 
 
 
