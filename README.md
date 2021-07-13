@@ -736,6 +736,39 @@ docker exec -it fa9d2d0a37cd /bin/bash
 
 6、之前进行了卷挂载，现在可以直接发布项目
 
+## 发布镜像到dockerhub
+
+```shell
+[root@wyf ~]# docker login --help
+
+Usage:  docker login [OPTIONS] [SERVER]
+
+Log in to a Docker registry.
+If no server is specified, the default is defined by the daemon.
+
+Options:
+  -p, --password string   Password
+      --password-stdin    Take the password from stdin
+  -u, --username string   Username
+[root@wyf ~]# docker login -u wangyifan52199
+Password: 
+WARNING! Your password will be stored unencrypted in /root/.docker/config.json.
+Configure a credential helper to remove this warning. See
+https://docs.docker.com/engine/reference/commandline/login/#credentials-store
+
+Login Succeeded
+
+
+[root@wyf ~]# docker tag e139b5cf37ec wangyifan52199/tomcat:1.0
+[root@wyf ~]# docker push wangyifan52199/tomcat:1.0
+```
+
+发布到dockerhub时必须加上自己dockerhub的用户名和版本号
+
+## 发布镜像到阿里云仓库
+
+
+
 # Docker 网络
 
 查看ip
@@ -744,7 +777,151 @@ docker exec -it fa9d2d0a37cd /bin/bash
 ip addr
 ```
 
+```shell
+--link  # 相当于在容器的。etc/host文件中配置，不推荐使用
+```
 
+## 自定义网络
+
+自己定义一个网络，不适用docker0那个网关
+
+```shell
+[root@wyf ~]# docker network create --driver bridge --subnet 192.168.0.0/16 --gateway 192.168.0.1 mynet
+f6b7fb7b2111922b98ca9abd124f0026a42c315d1e7ff621d7a0816e461f3c5b
+[root@wyf ~]# docker network ls
+NETWORK ID     NAME      DRIVER    SCOPE
+0d8f5f39d543   bridge    bridge    local
+0f3b1aa83cae   host      host      local
+f6b7fb7b2111   mynet     bridge    local
+ec8d25ca4fa6   none      null      local
+[root@wyf ~]# docker network inspect mynet
+[
+    {
+        "Name": "mynet",
+        "Id": "f6b7fb7b2111922b98ca9abd124f0026a42c315d1e7ff621d7a0816e461f3c5b",
+        "Created": "2021-07-13T16:54:30.631649366+08:00",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "192.168.0.0/16",
+                    "Gateway": "192.168.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Containers": {},
+        "Options": {},
+        "Labels": {}
+    }
+]
+[root@wyf ~]# docker run -d -P --name tomcat-net-01 --net mynet tomcat
+ead3de99b193864102297e08100902f4a10bda050bd6453632bd900664a354d0
+[root@wyf ~]# docker run -d -P --name tomcat-net-02 --net mynet tomcat
+386147fb8bd24a1f42cbd660447f3d5d21253dace9a36dc39a525614df23dc29
+
+[root@wyf ~]# docker network inspect mynet
+[
+    {
+        "Name": "mynet",
+        "Id": "f6b7fb7b2111922b98ca9abd124f0026a42c315d1e7ff621d7a0816e461f3c5b",
+        "Created": "2021-07-13T16:54:30.631649366+08:00",
+        "Scope": "local",
+        "Driver": "bridge",
+        "EnableIPv6": false,
+        "IPAM": {
+            "Driver": "default",
+            "Options": {},
+            "Config": [
+                {
+                    "Subnet": "192.168.0.0/16",
+                    "Gateway": "192.168.0.1"
+                }
+            ]
+        },
+        "Internal": false,
+        "Attachable": false,
+        "Ingress": false,
+        "ConfigFrom": {
+            "Network": ""
+        },
+        "ConfigOnly": false,
+        "Containers": {
+            "386147fb8bd24a1f42cbd660447f3d5d21253dace9a36dc39a525614df23dc29": {
+                "Name": "tomcat-net-02",
+                "EndpointID": "9368c9a834d779a655df096927e45b1f11ca055e369d5e8fd1f7ddebb42be6a0",
+                "MacAddress": "02:42:c0:a8:00:03",
+                "IPv4Address": "192.168.0.3/16",
+                "IPv6Address": ""
+            },
+            "ead3de99b193864102297e08100902f4a10bda050bd6453632bd900664a354d0": {
+                "Name": "tomcat-net-01",
+                "EndpointID": "040021b957a21340a9a2cee4c4faeed3d3cddac081adc309c4b050a1b5cafd75",
+                "MacAddress": "02:42:c0:a8:00:02",
+                "IPv4Address": "192.168.0.2/16",
+                "IPv6Address": ""
+            }
+        },
+        "Options": {},
+        "Labels": {}
+    }
+]
+[root@wyf ~]# docker exec -it tomcat-net-01 ping tomcat-net-02
+PING tomcat-net-02 (192.168.0.3) 56(84) bytes of data.
+64 bytes from tomcat-net-02.mynet (192.168.0.3): icmp_seq=1 ttl=64 time=0.079 ms
+64 bytes from tomcat-net-02.mynet (192.168.0.3): icmp_seq=2 ttl=64 time=0.082 ms
+64 bytes from tomcat-net-02.mynet (192.168.0.3): icmp_seq=3 ttl=64 time=0.084 ms
+64 bytes from tomcat-net-02.mynet (192.168.0.3): icmp_seq=4 ttl=64 time=0.071 ms
+^C
+--- tomcat-net-02 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time 3ms
+rtt min/avg/max/mdev = 0.071/0.079/0.084/0.005 ms
+```
+
+## 不同网络链接
+
+不同的网络之间不能连接，但是一个网络下的容器可以和另一个网络进行链接
+
+```shell
+docker network connect 网络名 容器名
+# 即可以实现一个容器和另一个网络打通
+```
+
+
+
+# spring boot微服务打包docker镜像
+
+1、编写dockerfile，可以在idea中写，插件中搜索docker下载一个写dockerfile的插件
+
+```shell
+FROM java:8
+
+COPY *.jar /app.jar
+
+CMD ["--server.port=8080"]
+
+EXPOSE 8080
+ENTRYPOINT ["java","-jar","/app.jar"]
+```
+
+2、发布镜像
+
+```shell
+# 把相应的jar包和dockerfile传到服务器上
+# docker build -t springboot-app
+# docker run -d -P --name wangyifan-spring springboot-app
+# 然后spring项目就会在容器中跑起来了
+```
 
 
 
