@@ -925,6 +925,40 @@ ENTRYPOINT ["java","-jar","/app.jar"]
 
 
 
+# Docker-compose
+
+https://docs.docker.com/compose/install/
+
+**按照官网的步骤走**
+
+```shell
+# 安装compose
+curl -L "http://get.daocloud.io/docker/compose/releases/download/1.29.2/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+
+# http://get.daocloud.io
+
+# 配置全局二进制文件
+chmod +x /usr/local/bin/docker-compose
+```
+
+https://docs.docker.com/compose/gettingstarted/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
